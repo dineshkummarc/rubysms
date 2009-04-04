@@ -22,7 +22,8 @@ module SMS::Backend
 	# sporadically changes without warning. May The Force be with you.
 	class HTTP < Base
 		HTTP_PORT = 1270
-		MT_URL = "http://ajax.googleapis.com/ajax/libs/mootools/1.2.1/mootools-yui-compressed.js"
+		#MT_URL = "http://ajax.googleapis.com/ajax/libs/mootools/1.2.1/mootools-yui-compressed.js"
+		MT_URL = "http://localhost:8888/mootools-yui-compressed.js"
 		attr_reader :msg_log
 		
 		def initialize(port=HTTP_PORT, mootools_url=MT_URL)
