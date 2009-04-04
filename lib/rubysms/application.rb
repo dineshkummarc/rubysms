@@ -4,6 +4,14 @@
 module SMS
 	class App < Thing
 		
+		NAMED_PRIORITY = {
+			:highest => 100,
+			:high    => 90,
+			:normal  => 50,
+			:low     => 10,
+			:lowest  => 0
+		}
+		
 		# Creates and starts a router to serve only
 		# this application. Handy during development.
 		#
@@ -52,6 +60,83 @@ module SMS
 			
 			router.add_app(self.new)
 			router.serve_forever
+		end
+		
+		# Sets or returns the priority of this application **class**. Returning
+		# this value isn't tremendously useful by itself, and mostly exists for
+		# the sake of completeness, and to be called by Application#priority.
+		# The value returned is obtained by finding the first ancestor of this
+		# class which has a @priority (yes, it looks inside other classes
+		# instance variables. I'm sorry.), and converts it to a number via
+		# the SMS::App::NAMED_PRIORITY constant.
+		#
+		#   class One < SMS::App
+		#     priority :high
+		#   end
+		#   
+		#   class Two < One
+		#   end
+		#   
+		#   class Three < Two
+		#     priority 36
+		#   end
+		#
+		#   One.priority   => 90 # set via NAMED_PRIORITY
+		#   Two.priority   => 90 # inherited from One
+		#   Three.priority => 36 # set literally
+		#
+		def self.priority(priority=nil)
+		
+			# set the priority of this class if an argument
+			# were provided, and allow execution to continue
+			# to check it's validity
+			unless priority.nil?
+				@priority = priority
+			end
+			
+			# find the first ancestor with a priority
+			# (Class.ancestors *includes* self)
+			self.ancestors.each do |klass|
+				if klass.instance_variable_defined?(:@priority)
+					prio = klass.instance_variable_get(:@priority)
+					
+					# literal numbers are okay, although
+					# that probably isn't such a good idea
+					if prio.is_a?(Numeric)
+						return prio
+					
+					# if this class has a named priority,
+					# resolve and return it's value
+					elsif prio.is_a?(Symbol)
+						if NAMED_PRIORITY.has_key?(prio)
+							return NAMED_PRIORITY[prio]
+						
+						# don't allow invalid named priorites.
+						# i can't think of a use case, especially
+						# since the constant can be monkey-patched
+						# if it's really necessary
+						else
+							raise(
+								NameError,
+								"Invalid named priority #{prio.inspect} " +\
+								"of {klass}. Valid named priorties are: " +\
+								NAMED_PRIORITY.keys.join(", "))
+						end
+					end
+				end
+			end
+			
+			# no ancestor has a priority, so assume
+			# that this app is of "normal" priority
+			return NAMED_PRIORITY[:normal]
+		end
+		
+		def priority=(level)
+			@priority = level
+		end
+		
+		def priority
+			@priority or self.class.priority
 		end
 		
 		def incoming(msg)
