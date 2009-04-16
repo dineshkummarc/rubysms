@@ -7,7 +7,7 @@
 # github. the dir structure should look something like:
 #
 # projects
-#  - rubygsms
+#  - rubysms
 #  - rubygsm
 begin
 	dir = File.dirname(__FILE__)
